@@ -19,8 +19,7 @@ class TestFramableMeta(unittest.TestCase):
 
         assert isinstance(MyKls.__frame__, pd.DataFrame)
         assert MyKls.__frame__.empty
-
-        # assert len(MyKls.__frame__) == 0
+        assert len(MyKls.__frame__) == 0
 
         myobj = MyKls(42, 51)
 

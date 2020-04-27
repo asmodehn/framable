@@ -6,8 +6,12 @@ class FramableMeta(type):
     def __new__(mcls, name, bases, ns):
 
         cls = super(FramableMeta, mcls).__new__(mcls, name, bases, ns)
-        cls._classframe = pd.DataFrame()  # empty dataframe on class creation
         return cls
+
+    def __init__(cls, name, bases, ns):
+
+        super(FramableMeta, cls).__init__(name, bases, ns)
+        cls._classframe = pd.DataFrame()  # empty dataframe on class creation
 
     def __call__(cls, *args, **kwargs):
 
@@ -42,11 +46,12 @@ if __name__ == '__main__':
 
     try:
         print(myobj.__frame__)
-    except TypeError as te:
-        print("expected type error, as the instance doesnt have a frame representation provided by the metaclass")
+    except AttributeError as te:
+        print("expected AttributeError, as the instance doesnt have a frame representation provided by the metaclass")
 
+    myobj2 = MyKls(47, 53)
 
-
+    print(MyKls.__frame__)
 
 
 

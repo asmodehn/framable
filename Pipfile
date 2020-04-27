@@ -5,11 +5,13 @@ verify_ssl = true
 
 [dev-packages]
 pytest = "*"
+framable = {editable = true,path = "."}
 
 [packages]
 pandas = "*"
 wrapt = {file = "https://github.com/GrahamDumpleton/wrapt/archive/develop.zip"}
 hypothesis = "*"
+ipykernel = "*"
 
 [requires]
 python_version = "3.7"

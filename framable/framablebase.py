@@ -1,5 +1,3 @@
-import wrapt
-
 import pandas as pd
 from framable.framablemeta import FramableMeta
 

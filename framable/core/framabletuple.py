@@ -26,14 +26,18 @@ def FramableTuple(typename, fields=None):
     ntt = NamedTuple(typename=typename, fields=fields)
 
     # defining a child class to extend the nametuple type created
-    framable = FramableMeta(typename, (ntt, FramableBase), {
-        # nothing added here, let inheritance so its thing.
-    })
+    framable = FramableMeta(
+        typename,
+        (ntt, FramableBase),
+        {
+            # nothing added here, let inheritance do its thing.
+        },
+    )
 
     return framable
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     InlineTuple = FramableTuple("InlineTuple", [("att1", int), ("att2", int)])
 
@@ -44,8 +48,3 @@ if __name__ == '__main__':
     print(inltb.__series__)
 
     print(InlineTuple.__frame__)
-
-
-
-
-

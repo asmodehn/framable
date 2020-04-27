@@ -6,7 +6,6 @@ from framable.core.framabletuple import FramableTuple
 
 
 class TestFramableTuple(unittest.TestCase):
-
     def test_framabletuple(self):
 
         MyTpl = FramableTuple("MyTpl", [("att1", int), ("att2", int)])
@@ -29,5 +28,5 @@ class TestFramableTuple(unittest.TestCase):
         assert (myobj2.__series__ == pd.Series(myobj2._asdict())).all()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

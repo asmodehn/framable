@@ -6,9 +6,7 @@ from framable.framablemeta import FramableMeta
 
 
 class TestFramableMeta(unittest.TestCase):
-
     def test_framableclass(self):
-
         class MyKls(metaclass=FramableMeta):
 
             att1: int
@@ -24,10 +22,10 @@ class TestFramableMeta(unittest.TestCase):
         myobj = MyKls(42, 51)
 
         assert len(MyKls.__frame__) == 1
-        assert (MyKls.__frame__.columns == ['att1', 'att2']).all()
+        assert (MyKls.__frame__.columns == ["att1", "att2"]).all()
         # proper panda way to check datatype...
-        assert pd.api.types.is_int64_dtype(MyKls.__frame__.dtypes['att1'])
-        assert pd.api.types.is_int64_dtype(MyKls.__frame__.dtypes['att2'])
+        assert pd.api.types.is_int64_dtype(MyKls.__frame__.dtypes["att1"])
+        assert pd.api.types.is_int64_dtype(MyKls.__frame__.dtypes["att2"])
         # checking the first record is the instance we just created
         assert (MyKls.__frame__.iloc[0] == pd.Series(vars(myobj))).all()
 
@@ -56,13 +54,13 @@ class TestFramableMeta(unittest.TestCase):
         myotherobj = MyOtherKls("alice", 51)
 
         assert len(MyOtherKls.__frame__) == 1
-        assert (MyOtherKls.__frame__.columns == ['att1', 'att2']).all()
+        assert (MyOtherKls.__frame__.columns == ["att1", "att2"]).all()
         # proper panda way to check datatype...
-        assert pd.api.types.is_string_dtype(MyOtherKls.__frame__.dtypes['att1'])
-        assert pd.api.types.is_int64_dtype(MyOtherKls.__frame__.dtypes['att2'])
+        assert pd.api.types.is_string_dtype(MyOtherKls.__frame__.dtypes["att1"])
+        assert pd.api.types.is_int64_dtype(MyOtherKls.__frame__.dtypes["att2"])
         # checking the first record is the instance we just created
         assert (MyOtherKls.__frame__.iloc[0] == pd.Series(vars(myotherobj))).all()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

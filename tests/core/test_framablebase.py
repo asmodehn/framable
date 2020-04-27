@@ -6,9 +6,7 @@ from framable.framablebase import FramableBase
 
 
 class TestFramableBase(unittest.TestCase):
-
     def test_framableclass(self):
-
         class MyKls(FramableBase):
 
             att1: int
@@ -35,5 +33,5 @@ class TestFramableBase(unittest.TestCase):
         assert (myobj2.__series__ == pd.Series(vars(myobj2))).all()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

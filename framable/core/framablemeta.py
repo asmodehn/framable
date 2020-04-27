@@ -2,7 +2,6 @@ import pandas as pd
 
 
 class FramableMeta(type):
-
     def __new__(mcls, name, bases, ns):
 
         cls = super(FramableMeta, mcls).__new__(mcls, name, bases, ns)
@@ -19,11 +18,11 @@ class FramableMeta(type):
 
         # get instance and store it in classframe
         if isinstance(inst, dict):
-            cls._classframe = cls._classframe.append([inst], )
-        elif isinstance(inst, tuple) and hasattr(inst, '_asdict'):
-            cls._classframe = cls._classframe.append([inst._asdict()], )
+            cls._classframe = cls._classframe.append([inst],)
+        elif isinstance(inst, tuple) and hasattr(inst, "_asdict"):
+            cls._classframe = cls._classframe.append([inst._asdict()],)
         else:
-            cls._classframe = cls._classframe.append([vars(inst)], )
+            cls._classframe = cls._classframe.append([vars(inst)],)
         # column and dtypes will be inferred...
         cls._classframe.convert_dtypes()
 
@@ -35,7 +34,7 @@ class FramableMeta(type):
         return cls._classframe
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     class MyKls(metaclass=FramableMeta):
 
@@ -52,11 +51,10 @@ if __name__ == '__main__':
     try:
         print(myobj.__frame__)
     except AttributeError as te:
-        print("expected AttributeError, as the instance doesnt have a frame representation provided by the metaclass")
+        print(
+            "expected AttributeError, as the instance doesnt have a frame representation provided by the metaclass"
+        )
 
     myobj2 = MyKls(47, 53)
 
     print(MyKls.__frame__)
-
-
-

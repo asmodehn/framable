@@ -1,5 +1,5 @@
 import pandas as pd
-from framable.framablemeta import FramableMeta
+from core.framablemeta import FramableMeta
 
 
 class FramableBase(metaclass=FramableMeta):
@@ -12,7 +12,12 @@ class FramableBase(metaclass=FramableMeta):
 
     @property
     def __series__(self):
-        return pd.Series(vars(self))
+        if isinstance(self, dict):
+            return pd.Series(self)
+        elif isinstance(self, tuple) and hasattr(self, '_asdict'):
+            return pd.Series(self._asdict())
+        else:
+            return pd.Series(vars(self))
 
 
 if __name__ == '__main__':

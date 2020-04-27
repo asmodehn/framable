@@ -18,7 +18,12 @@ class FramableMeta(type):
         inst = super(FramableMeta, cls).__call__(*args, **kwargs)
 
         # get instance and store it in classframe
-        cls._classframe = cls._classframe.append([vars(inst)], )
+        if isinstance(inst, dict):
+            cls._classframe = cls._classframe.append([inst], )
+        elif isinstance(inst, tuple) and hasattr(inst, '_asdict'):
+            cls._classframe = cls._classframe.append([inst._asdict()], )
+        else:
+            cls._classframe = cls._classframe.append([vars(inst)], )
         # column and dtypes will be inferred...
         cls._classframe.convert_dtypes()
 

@@ -2,7 +2,7 @@ import unittest
 import pandas as pd
 from pandas.core import dtypes
 
-from framable.framablemeta import FramableMeta
+from framable.core.framablemeta import FramableMeta
 
 
 class TestFramableMeta(unittest.TestCase):
@@ -11,7 +11,7 @@ class TestFramableMeta(unittest.TestCase):
 
             att1: int
 
-            def __init__(self, att1, att2):
+            def __init__(self, att1=0, att2=0):
                 self.att1 = att1
                 self.att2 = att2  # unspecified in class, added on init
 
@@ -44,8 +44,8 @@ class TestFramableMeta(unittest.TestCase):
 
             att1: str
 
-            def __init__(self, att1, att2):
-                self.att1 = att1
+            def __init__(self, att1=None, att2=0):
+                self.att1 = att1 if att1 is not None else ""
                 self.att2 = att2  # unspecified in class, added on init
 
         assert isinstance(MyOtherKls.__frame__, pd.DataFrame)

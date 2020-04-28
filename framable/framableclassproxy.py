@@ -1,6 +1,5 @@
 import wrapt
 import pandas as pd
-from framable.framablebase import FramableBase
 
 
 class FramableClassProxy(wrapt.ObjectProxy):

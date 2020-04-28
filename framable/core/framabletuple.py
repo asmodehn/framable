@@ -1,29 +1,36 @@
-from typing import NamedTuple, NamedTupleMeta
+from collections import namedtuple
 
-import pandas as pd
-import typing
+from typing import Union, Iterable, Optional, Any, Type, Mapping
 
-from core.framablemeta import FramableMeta
-from core.framablebase import FramableBase
+if not __package__:
+    __package__ = "framable.core"
+from .framablemeta import FramableMeta
+from .framablebase import FramableBase
 
 # Here we need to reimplement the logic for __frame__ and __series__, to avoid metaclass conflict.
 # However we will need to patch objects directly, since we cannot rely on inheritance for NamedTuple,
 # due to an odd class design in typing.NamedTuple (twisting inheritance as dynamic type factory...)
 
 
-def FramableTuple(typename, fields=None):
+def FramableTuple(typename, field_names: Union[str, Iterable[str]],
+                  types: Optional[Mapping[str,Type]],
+                  defaults: Optional[Mapping[str,Any]],
+                  module: Optional[str] = "__main__") -> Type[FramableMeta]:
     """
-    This is a factory to create NamedTuple types,
-    and patch it to add __frame__ to the class and __series__ to the instances
+    This is a factory to create NamedTuple FramableTypes.
 
-    WARNING : we should not rely on the class structure of NamedTuple.
-              It is quite hacky, using a class as a dynamic class factory... forbidding potential inheritance.
+    WARNING : We should not rely on the class structure of typing.NamedTuple,
+              it is still changing between different versions of python...
+
+    However we keep an interface close to collection.namedtuple()
+    to be able to quickly adjust to various python versions.
 
     :param typename:
     :param fields:
     :return:
     """
-    ntt = NamedTuple(typename=typename, fields=fields)
+    ntt = namedtuple(typename, field_names=field_names, defaults=defaults, module=module)
+    ntt.__annotations__ = ntt.__new__.__annotations__ = types
 
     # defining a child class to extend the nametuple type created
     framable = FramableMeta(
@@ -31,6 +38,9 @@ def FramableTuple(typename, fields=None):
         (ntt, FramableBase),
         {
             # nothing added here, let inheritance do its thing.
+            # TODO : wrap __new__ to take late defaults into account... => use it into framablefunctionwrapper
+            # '__new__': lambda cls, **kwa:
+            # TODO : python 3.8 careful with multiple inheritance...
         },
     )
 
@@ -39,7 +49,9 @@ def FramableTuple(typename, fields=None):
 
 if __name__ == "__main__":
 
-    InlineTuple = FramableTuple("InlineTuple", [("att1", int), ("att2", int)])
+    InlineTuple = FramableTuple("InlineTuple", field_names=["att1", "att2"],
+                                types={"att1": int, "att2": int},
+                                defaults={"att1": 0, "att2": 0})
 
     inlta = InlineTuple(att1=42, att2=51)
     inltb = InlineTuple(att1=47, att2=53)

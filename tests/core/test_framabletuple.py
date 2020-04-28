@@ -8,7 +8,7 @@ from framable.core.framabletuple import FramableTuple
 class TestFramableTuple(unittest.TestCase):
     def test_framabletuple(self):
 
-        MyTpl = FramableTuple("MyTpl", [("att1", int), ("att2", int)])
+        MyTpl = FramableTuple("MyTpl", {"att1": int, "att2": int})
 
         myobj = MyTpl(42, 51)
 

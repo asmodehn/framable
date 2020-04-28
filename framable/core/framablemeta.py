@@ -1,6 +1,8 @@
 import pandas as pd
 
 
+# TODO : record the object address or full name, for reference in "foreign keys" later...
+
 class FramableMeta(type):
     def __new__(mcls, name, bases, ns):
 
@@ -8,11 +10,19 @@ class FramableMeta(type):
         return cls
 
     def __init__(cls, name, bases, ns):
-
         super(FramableMeta, cls).__init__(name, bases, ns)
+        cls.__initial__ = cls()  # creating initial object on class creation
         cls._classframe = pd.DataFrame()  # empty dataframe on class creation
 
     def __call__(cls, *args, **kwargs):
+        if not args and not kwargs:
+            if hasattr(cls, '__initial__'):
+                return cls.__initial__  # return the initial object inside the type
+            else:  # the first time for initial instance creation
+                try:
+                    return super(FramableMeta, cls).__call__(*args, **kwargs)
+                except TypeError as e:
+                    raise  # missing required position arguments -> TODO : encapsulate in lib exception
 
         inst = super(FramableMeta, cls).__call__(*args, **kwargs)
 

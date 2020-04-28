@@ -2,7 +2,7 @@ import unittest
 import pandas as pd
 from pandas.core import dtypes
 
-from framable.framablebase import FramableBase
+from framable.core.framablebase import FramableBase
 
 
 class TestFramableBase(unittest.TestCase):

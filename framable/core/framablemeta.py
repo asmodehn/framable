@@ -44,6 +44,10 @@ class FramableMeta(type):
                 raise TypeError(f"Non-framable type {types[field_name]} of field {field_name} "
                                 f"needs to specify a default value")
 
+        # Note: a namedtuple is the proper data structure to represent frozen bound args.
+        # Immutable, iterable on values, indexed via keys.
+        # TODO : check nptyping...
+        # Here we leverage our core framable implementation...
         Impl = collections.namedtuple(typename=f"{name}Impl", field_names=types.keys(),
                                       defaults=[ns[n] for n in default_names],
                                       module=ns['__module__'])
@@ -106,6 +110,8 @@ class FramableMeta(type):
     def __frame__(cls):
         """ Accessing classframe via property to prevent mutation """
         return cls._classframe
+
+    # TODO : add for sum of types (and concatenation of namedtuple implementation)
 
 
 if __name__ == "__main__":

@@ -30,11 +30,15 @@ def signature_tuple(wrapped: typing.Callable):
         else:
             with_defaults[p] = None  # default value for any type in python...
 
-    argtuple = FramableMeta(f"{wrapped.__name__}_arguments_tuple", bases=(), ns={
-        # **signature.parameters,  # not needed ??
-        **with_defaults,
-        '__annotations__': with_hints
-    })
+    argtuple = FramableMeta(
+        f"{wrapped.__name__}_arguments_tuple",
+        bases=(),
+        ns={
+            # **signature.parameters,  # not needed ??
+            **with_defaults,
+            "__annotations__": with_hints,
+        },
+    )
 
     # TODO : maybe default to id() to return initial object seems sensible ??
     if signature.return_annotation is inspect._empty:
@@ -42,14 +46,20 @@ def signature_tuple(wrapped: typing.Callable):
         result_hint = typing.Any  # default return type in python
     else:  # TODO : some special optimisation when we can iterate on the result -> namedtuple -> columns in frame ?
         result_hint = type(signature.return_annotation)
-        result_default = result_hint.__initial__ if hasattr(result_hint, '__initial__') else None
+        result_default = (
+            result_hint.__initial__ if hasattr(result_hint, "__initial__") else None
+        )
 
-    result_tuple = FramableMeta(f"{wrapped.__name__}_result_tuple", bases=(), ns={
-        'result': result_default,  # default return value in python
-        '__annotations__': {'result': result_hint}
-        # note 'return' is a special key : https://docs.python.org/3/library/inspect.html#types-and-members
-        # BUT nametuple keys cannot be keywords...
-    })
+    result_tuple = FramableMeta(
+        f"{wrapped.__name__}_result_tuple",
+        bases=(),
+        ns={
+            "result": result_default,  # default return value in python
+            "__annotations__": {"result": result_hint}
+            # note 'return' is a special key : https://docs.python.org/3/library/inspect.html#types-and-members
+            # BUT nametuple keys cannot be keywords...
+        },
+    )
 
     def bind(instance):
         """ refining signature of the method after binding for proper typing."""
@@ -68,11 +78,12 @@ def signature_tuple(wrapped: typing.Callable):
         if isinstance(instance, result_hint):
             result_default = instance
 
-        #refine the result tuple
-        result_tuple = FramableMeta(f"{wrapped.__name__}_result_tuple", bases=(), ns={
-            'result': result_default,
-            '__annotations__': {'result': result_hint}
-        })
+        # refine the result tuple
+        result_tuple = FramableMeta(
+            f"{wrapped.__name__}_result_tuple",
+            bases=(),
+            ns={"result": result_default, "__annotations__": {"result": result_hint}},
+        )
         # otherwise keep it the same (same semantics as unbound)
 
         # signature for python doesnt change (?)
@@ -83,15 +94,25 @@ def signature_tuple(wrapped: typing.Callable):
 
 
 class FramableBoundFunctionWrapper(wrapt.BoundFunctionWrapper):
-
-    def __init__(self, descriptor, instance,
-                        _self_wrapper, _self_enabled,
-                        _self_binding, _self_parent):
+    def __init__(
+        self,
+        descriptor,
+        instance,
+        _self_wrapper,
+        _self_enabled,
+        _self_binding,
+        _self_parent,
+    ):
         # Note : this is called at every mention of the decorated function, in order to attempt grabbing the instance.
         # unexpected => TODO minimize code here
-        super(FramableBoundFunctionWrapper, self).__init__(descriptor, instance,
-                                                         _self_wrapper, _self_enabled,
-                                                         _self_binding, _self_parent)
+        super(FramableBoundFunctionWrapper, self).__init__(
+            descriptor,
+            instance,
+            _self_wrapper,
+            _self_enabled,
+            _self_binding,
+            _self_parent,
+        )
 
         self._self_descriptor = descriptor
 
@@ -134,8 +155,12 @@ class FramableBoundFunctionWrapper(wrapt.BoundFunctionWrapper):
         restuple = self._self_resulttuple(result)
 
         # bound function gets recreated everytime we want to access it. we need to store the callframe in the parent.
-        self._self_parent._self_callframe = self._self_parent._self_callframe.append([args._asdict()], ignore_index=True)
-        self._self_parent._self_returnframe = self._self_parent._self_returnframe.append([restuple._asdict()], ignore_index=True)
+        self._self_parent._self_callframe = self._self_parent._self_callframe.append(
+            [args._asdict()], ignore_index=True
+        )
+        self._self_parent._self_returnframe = self._self_parent._self_returnframe.append(
+            [restuple._asdict()], ignore_index=True
+        )
 
         return result
 
@@ -145,7 +170,9 @@ class FramableBoundFunctionWrapper(wrapt.BoundFunctionWrapper):
         if self._self_instance:  # bound usecase (also in frame)
             firstparam = next(iter(self._self_signature.parameters))
             # taking only subframe for current instance
-            boundframe = self._self_callframe.loc[self._self_callframe[firstparam] == self._self_instance].drop([firstparam], axis=1)
+            boundframe = self._self_callframe.loc[
+                self._self_callframe[firstparam] == self._self_instance
+            ].drop([firstparam], axis=1)
         else:
             # if called on the class (and not the instance)
             boundframe = self._self_callframe
@@ -164,11 +191,17 @@ class FramableFunctionWrapper(wrapt.FunctionWrapper):
         self._self_resulttuple = rest
         self._self_sigbind = bind
 
-        self._self_reset = True  # signal to the potential boundfunctionwrapper init call
+        self._self_reset = (
+            True  # signal to the potential boundfunctionwrapper init call
+        )
         # that it is time to reset its data, that might be stored elsewhere...
 
-        self._self_callframe = pd.DataFrame(columns=argt._fields)  # empty dataframe before we have any data sample...
-        self._self_returnframe = pd.DataFrame(columns=rest._fields)  # empty dataframe before we have any data sample...
+        self._self_callframe = pd.DataFrame(
+            columns=argt._fields
+        )  # empty dataframe before we have any data sample...
+        self._self_returnframe = pd.DataFrame(
+            columns=rest._fields
+        )  # empty dataframe before we have any data sample...
 
     def __call__(self, *args, **kwargs):
 
@@ -182,11 +215,15 @@ class FramableFunctionWrapper(wrapt.FunctionWrapper):
         args = self._self_argtuple(**bound_args.arguments)
 
         # converting result... careful this needs to match how the signature interpreted result as tuple...
-        restuple =  self._self_resulttuple(result)
+        restuple = self._self_resulttuple(result)
 
         #  we don't need to apply default here, it has already been done during the call
-        self._self_callframe = self._self_callframe.append([args._asdict()], ignore_index=True)
-        self._self_returnframe = self._self_returnframe.append([restuple._asdict()], ignore_index=True)
+        self._self_callframe = self._self_callframe.append(
+            [args._asdict()], ignore_index=True
+        )
+        self._self_returnframe = self._self_returnframe.append(
+            [restuple._asdict()], ignore_index=True
+        )
         return result
 
     @property
@@ -200,12 +237,12 @@ def framed_function_wrapper(wrapper):
     @functools.wraps(wrapper)
     def _wrapper(wrapped):
         return FramableFunctionWrapper(wrapped, wrapper)
+
     return _wrapper
 
 
 # TODO : add a pure option declaration (to optimize and grab result from trace on call when possible)
 def framed():
-
     @framed_function_wrapper
     def framed_decorator(wrapped, instance, args, kwargs):
 
@@ -214,7 +251,7 @@ def framed():
     return framed_decorator
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     @framed()
     def myfun(a: int = 39) -> int:
@@ -222,7 +259,7 @@ if __name__ == '__main__':
 
     assert myfun(48) == 51
 
-    print (myfun.__frame__)
+    print(myfun.__frame__)
     assert len(myfun.__frame__) == 1
     # assert myfun.__frame__[48] == 51  # TODO : access trace result via mapping syntax (getitem)
 
@@ -241,4 +278,3 @@ if __name__ == '__main__':
 
     # Note the __frame__ attrribute on class return calls for all instances
     print(FrameTest.myfun.__frame__)
-

@@ -14,7 +14,15 @@ def function_test(*args, **kwargs):
     return args, kwargs
 
 
-class TestFramed(unittest.TestCase):
+class TestFramableFunctionWrapper(unittest.TestCase):
+
+    @classmethod
+    def class_boundfunction_test(cls, *args, **kwargs):
+        return args, kwargs
+
+    @staticmethod
+    def static_boundfunction_test(*args, **kwargs):
+        return args, kwargs
 
     def boundfunction_test(self, *args, **kwargs):
         return args, kwargs
@@ -25,122 +33,105 @@ class TestFramed(unittest.TestCase):
         cf = framed()(function_test)
         assert isinstance(cf, wrapt.FunctionWrapper)
         cc = cf(*args, **kwargs)
+
         # usual result
         resa, reskwa = cc
         assert resa == args
         assert reskwa == kwargs
-        # the trace should also have it
-        # resa, reskwa = cf._self_trace[args][kwargs]
-        # assert resa == args
-        # assert reskwa == kwargs
-        # Note : No future there, simply the call result.
+        # callframe should have arguments
+        a, kwa = cf._self_callframe.loc[0]
+        assert resa == a
+        assert reskwa == kwa
+        # returnframe should have result
+        resa, reskwa = cf._self_returnframe.loc[0].result
+        assert resa == args
+        assert reskwa == kwargs
 
     @given(args=st.tuples(st.integers()),
            kwargs=st.dictionaries(keys=st.text(max_size=5), values=st.integers()))
-    def test_framable_boundfunction(self, args, kwargs):
-        cf = framed()(function_test)
-        assert isinstance(cf, wrapt.FunctionWrapper)
-        cc = cf(*args, **kwargs)
+    def test_framable_static_boundfunction(self, args, kwargs):
+        TestFramableFunctionWrapper.dsf = framed()(TestFramableFunctionWrapper.static_boundfunction_test)
+        assert isinstance(TestFramableFunctionWrapper.dsf, wrapt.BoundFunctionWrapper)
+        cc = TestFramableFunctionWrapper.dsf(*args, **kwargs)
+
         # usual result
         resa, reskwa = cc
         assert resa == args
         assert reskwa == kwargs
-        # the trace should also have it
-        # resa, reskwa = cf._self_trace[args][kwargs]
-        # assert resa == args
-        # assert reskwa == kwargs
-        # Note : No future there, simply the call result.
+        # callframe should have arguments
+        a, kwa = TestFramableFunctionWrapper.dsf._self_callframe.loc[0]
+        assert resa == a
+        assert reskwa == kwa
+        # returnframe should have result
+        resa, reskwa = TestFramableFunctionWrapper.dsf._self_returnframe.loc[0].result
+        assert resa == args
+        assert reskwa == kwargs
 
-    #
-    # @given(args=st.integers(),
-    #        kwargs=st.dictionaries(keys=st.text(max_size=5), values=st.integers()))
-    # def test_traced_coroutine(self, *args, **kwargs):
-    #     # testing a simple dict (minimum necessary interface to use the trace as a producer)
-    #     self.trace = dict()
-    #
-    #     cf = framed()(coroutine_test)
-    #     assert isinstance(cf, wrapt.FunctionWrapper)
-    #     cc = cf(*args, **kwargs)
-    #     assert inspect.iscoroutine(cc)
-    #     # trace already has the future/task stored as the last element
-    #     assert isinstance(self.trace[(args, kwargs)], Task)
-    #     resa, reskwa = asyncio.run(cc)
-    #     assert resa == args
-    #     assert reskwa == kwargs
-    #     assert self.trace[:-1].done()  # future is done()
-    #     # and the result should be accessible
-    #     resa, reskwa = self.trace[:-1]
-    #     assert resa == args
-    #     assert reskwa == kwargs
+    @given(args=st.tuples(st.integers()),
+           kwargs=st.dictionaries(keys=st.text(max_size=5), values=st.integers()))
+    def test_framable_class_boundfunction(self, args, kwargs):
+        TestFramableFunctionWrapper.dcf = framed()(TestFramableFunctionWrapper.class_boundfunction_test)
+        assert isinstance(TestFramableFunctionWrapper.dcf, wrapt.BoundFunctionWrapper)
+        cc = TestFramableFunctionWrapper.dcf(*args, **kwargs)
 
-    #
-    # @given(delay=st.floats(allow_nan=False, allow_infinity=False),
-    #        args=st.integers(),
-    #        kwargs=st.dictionaries(keys=st.text(max_size=5), values=st.integers()))
-    # def test_delayed_generator(self, delay, *args, **kwargs):
-    #     # obvious setup
-    #     self.delayed = 0.0
-    #     self.adelayed = 0.0
-    #
-    #     cf = delayed(delay=delay, sleeper=self.syncsleep)(generator_test)
-    #     assert isinstance(cf, wrapt.FunctionWrapper)
-    #     cc = cf(*args, **kwargs)
-    #     assert self.delayed == delay  # already delayed here, before starting generator.
-    #     assert self.adelayed == 0.0
-    #     assert inspect.isgenerator(cc)
-    #     # passing same args and kwargs to watcher for asserting
-    #     resa, reskwa = generator_watcher(cc, *args, **kwargs)
-    #     assert self.delayed == delay  # This was just a starting delay, not a throttle in generator loop.
-    #     assert self.adelayed == 0.0
-    #     assert resa == args
-    #     assert reskwa == kwargs
-    #
-    # @given(delay=st.floats(allow_nan=False, allow_infinity=False),
-    #        args=st.integers(),
-    #        kwargs=st.dictionaries(keys=st.text(max_size=5), values=st.integers()))
-    # def test_delayed_async_generator(self, delay, *args, **kwargs):
-    #     # obvious setup
-    #     self.delayed = 0.0
-    #     self.adelayed = 0.0
-    #
-    #     cf = delayed(delay=delay, sleeper=self.asyncsleep)(async_generator_test)
-    #     assert isinstance(cf, wrapt.FunctionWrapper)
-    #     cc = cf(*args, **kwargs)
-    #     assert self.delayed == 0.0
-    #     assert self.adelayed == 0.0
-    #     assert inspect.iscoroutine(cc)  # IS a coroutine ! wrapping an asyncgen !
-    #     # passing same args and kwargs to watcher for asserting
-    #     resa, reskwa = asyncio.run(awaitable_async_generator_watcher(cc, *args, **kwargs))
-    #     assert self.delayed == 0.0
-    #     assert self.adelayed == delay  # This was just a starting delay, not a throttle in generator loop
-    #     assert resa == args
-    #     assert reskwa == kwargs
-    #
-    # @given(delay=st.floats(allow_nan=False, allow_infinity=False),
-    #        args=st.integers(), kwargs=st.dictionaries(keys=st.text(max_size=5), values=st.integers()))
-    # def test_delayed_classmethod(self, delay, *args, **kwargs):
-    #     # obvious setup
-    #     self.delayed = 0.0
-    #     self.adelayed = 0.0
-    #
-    #     # test decorating the method (doing it functionally for tests)
-    #     ClassMethodTest.decmeth = delayed(delay=delay, sleeper=self.syncsleep)(ClassMethodTest.method)
-    #     assert isinstance(ClassMethodTest.decmeth, wrapt.BoundFunctionWrapper)
-    #
-    #     # Instantiation of the class (must be in sync code !)
-    #     ci = ClassMethodTest()
-    #
-    #     # calling it as usual as a method
-    #     cc = ci.decmeth(*args, **kwargs)
-    #     assert self.delayed == delay
-    #     assert self.adelayed == 0.0
-    #     resa, reskwa = cc
-    #     assert resa == args
-    #     assert reskwa == kwargs
+        # usual result
+        resa, reskwa = cc
+        assert resa == args
+        assert reskwa == kwargs
+        # callframe should have arguments
+        a, kwa = TestFramableFunctionWrapper.dcf._self_callframe.loc[0]
+        assert resa == a
+        assert reskwa == kwa
+        # returnframe should have result
+        resa, reskwa = TestFramableFunctionWrapper.dcf._self_returnframe.loc[0].result
+        assert resa == args
+        assert reskwa == kwargs
 
-    #TODO : decorating the class itself ? what semantics ? like decorating __init__ ? like a meta class, smthg else ? *typeclass* ?
+    @given(args=st.tuples(st.integers()),
+           kwargs=st.dictionaries(keys=st.text(max_size=5), values=st.integers()))
+    def test_framable_boundfunction_early(self, args, kwargs):
+        # simulating deacorating (with early decoration)
+        TestFramableFunctionWrapper.bfe = framed()(TestFramableFunctionWrapper.boundfunction_test)
+        # this will trigger __init__ of boundfunctionwrapper (with None as instance)
+        assert isinstance(self.bfe, wrapt.BoundFunctionWrapper)
+        bfe = self.bfe(*args, **kwargs)
 
+        # usual result
+        resa, reskwa = bfe
+        assert resa == args
+        assert reskwa == kwargs
+        # callframe should have arguments, AND self, since it was NOT obvious when we framed it
+        # Which also means all other instances WILL have the frame.
+        s, a, kwa = self.bfe._self_callframe.loc[0]
+        assert self == s
+        assert resa == a
+        assert reskwa == kwa
+        # returnframe should have result
+        resa, reskwa = self.bfe._self_returnframe.loc[0].result
+        assert resa == args
+        assert reskwa == kwargs
 
+    @given(args=st.tuples(st.integers()),
+           kwargs=st.dictionaries(keys=st.text(max_size=5), values=st.integers()))
+    def test_framable_boundfunction_late(self, args, kwargs):
+        # simulating decorating (with late decoration - equivalent to a function call of a partial method with self)
+        self.bfl = framed()(self.boundfunction_test)
+        assert isinstance(self.bfl, wrapt.FunctionWrapper)
+        cc = self.bfl(*args, **kwargs)
+
+        # usual result
+        resa, reskwa = cc
+        assert resa == args
+        assert reskwa == kwargs
+        # callframe should have arguments, but NOT self, since it was obvious when we framed it
+        # Which also means other instances WONT have the frame.
+        a, kwa = self.bfl._self_callframe.loc[0]
+        assert resa == a
+        assert reskwa == kwa
+        # returnframe should have result
+        resa, reskwa = self.bfl._self_returnframe.loc[0].result
+        assert resa == args
+        assert reskwa == kwargs
 
 
 if __name__ == "__main__":

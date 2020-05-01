@@ -122,7 +122,7 @@ class FramableBoundFunctionWrapper(wrapt.BoundFunctionWrapper):
             bound_args = self._self_signature.bind(*args, **kwargs)
 
         # where is instance grabbed from ? cant we retrieve it before calling ?
-        instance, args, kwargs, result = super(FramableBoundFunctionWrapper, self).__call__(*args, **kwargs)
+        result = super(FramableBoundFunctionWrapper, self).__call__(*args, **kwargs)
 
         # note: Here instance can be the class (for class methods) or None (for static methods)
 
@@ -176,7 +176,7 @@ class FramableFunctionWrapper(wrapt.FunctionWrapper):
         # mandatory first arguments - self, class - are not part of the signature see PEP 362)
         bound_args = self._self_signature.bind(*args, **kwargs)
 
-        instance, args, kwargs, result = super(FramableFunctionWrapper, self).__call__(*args, **kwargs)
+        result = super(FramableFunctionWrapper, self).__call__(*args, **kwargs)
 
         # building argtuple instance
         args = self._self_argtuple(**bound_args.arguments)
@@ -209,8 +209,7 @@ def framed():
     @framed_function_wrapper
     def framed_decorator(wrapped, instance, args, kwargs):
 
-        # TODO : BIND HERE INSTEAD ! for clarity...
-        return instance, args, kwargs, wrapped(*args, **kwargs)
+        return wrapped(*args, **kwargs)
 
     return framed_decorator
 
